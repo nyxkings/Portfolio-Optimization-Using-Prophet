@@ -1,1 +1,1 @@
-"""Machine Learning for P"""
+"""Machine Learning for Portfolio Optimization"""
