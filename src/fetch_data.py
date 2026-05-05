@@ -22,9 +22,10 @@ class DataFetcher:
         end_date: str = DEFAULT_END_DATE,
         use_cache: bool = True,
         cache_dir: str = "data/cache"
-    )
+    ):
+        
     
-    """
+        """
         Initialize the data fetcher.
         
         Args:
@@ -33,3 +34,51 @@ class DataFetcher:
             use_cache: Whether to cache downloaded data
             cache_dir: Directory to store cached data
         """
+        self.start_date = start_date
+        self.end_date = end_date
+        self.use_cache = use_cache
+        self.cache_dir = Path(cache_dir)
+        
+        if use_cache:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Cache enabled at {self.cache_dir}")
+    def _process_ticker_dataframe(
+        self, 
+        df: pd.DataFrame, 
+        price_column: str = "Adj Close",
+        add_returns: bool = True,
+        add_log_returns: bool = False,
+        add_volume: bool = False
+    ) -> pd.DataFrame:
+        """
+        Process raw ticker DataFrame with enhanced features.
+        
+        Args:
+            df: Raw DataFrame from yfinance
+            price_column: Which price column to use ('Close' or 'Adj Close')
+            add_returns: Add simple returns column
+            add_log_returns: Add log returns column
+            add_volume: Include volume data
+            
+        Returns:
+            Processed DataFrame with selected columns
+        """
+        if df.empty:
+            return pd.DataFrame()
+    
+    # CHANGED: Intelligent price column selection - try Adj Close first
+        if price_column not in df.columns:
+            if "Adj Close" in df.columns:
+                price_column = "Adj Close"
+                logger.warning(f"'{price_column}' not found, using 'Adj Close' instead")
+            elif "Close" in df.columns:
+                price_column = "Close"
+                logger.warning(f"Using 'Close' instead of 'Adj Close' - returns may be inaccurate after splits/dividends")
+            else:
+                price_column = df.columns[0]
+                logger.warning(f"No standard price column found, using '{price_column}'")
+    
+    result_df = pd.DataFrame(index=df.index)
+    result_df["Price"] = df[price_column]
+    
+    
